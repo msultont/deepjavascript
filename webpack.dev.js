@@ -1,45 +1,79 @@
 const path = require("path")
 const HtmlWebpackPlugin = require("html-webpack-plugin")
+const MiniCssExtractPlugin = require("mini-css-extract-plugin")
+const CssMinimizerPlugin = require("css-minimizer-webpack-plugin")
+
+const ASSET_PATH = process.env.ASSET_PATH || "/"
 
 module.exports = {
   mode: "development",
+  target: "web",
   devtool: "eval-cheap-module-source-map",
-  entry: {
-    main: "./src/app.js"
+  entry: path.resolve(__dirname, "src", "index.js"),
+  // entry: "./src/index.js",
+  resolve: {
+    extensions: [".js", ".jsx"],
+    alias: {
+      "@": path.resolve(__dirname, "src"),
+      "@components": path.resolve(__dirname, "src/components"),
+      "@config": path.resolve(__dirname, "src/config"),
+      "@page": path.resolve(__dirname, "src/pages"),
+      "@routes": path.resolve(__dirname, "src/routes"),
+      "@services": path.resolve(__dirname, "src/services"),
+      "@utils": path.resolve(__dirname, "src/utils")
+    }
   },
-  plugins: [
-    new HtmlWebpackPlugin({
-      title: "Development"
-    })
-  ],
+  optimization: {
+    minimize: true,
+    minimizer: [new CssMinimizerPlugin()]
+  },
   output: {
-    filename: "bundle.js",
+    filename: "[name].[contenthash].js",
     path: path.resolve(__dirname, "dist"),
-    clean: true
+    clean: true,
+    publicPath: ASSET_PATH
   },
   devServer: {
-    static: "./dist",
+    static: path.resolve(__dirname, "dist"),
     port: 8080,
     compress: true,
     hot: true,
+    open: true,
+    historyApiFallback: true
   },
+  plugins: [
+    new HtmlWebpackPlugin({
+      title: "Sulton Wibawa",
+      filename: "index.html",
+      template: path.resolve(__dirname, "./src/index.html")
+    }),
+    new MiniCssExtractPlugin({
+      filename: "[name].css"
+    })
+  ],
   module: {
     rules: [
       {
         // https://webpack.js.org/loaders/babel-loader/#root
-        test: /\.m?js$/i,
+        test: /\.m?jsx?$/i,
         exclude: /node_modules/,
         use: {
-          loader: "babel-loader",
-          options: {
-            presets: ["@babel/preset-env"]
-          }
+          loader: "babel-loader"
         }
       },
       {
         // https://webpack.js.org/loaders/css-loader/#root
         test: /\.css$/i,
         use: ["style-loader", "css-loader"]
+      },
+      {
+        test: /\.scss$/,
+        use: [
+          MiniCssExtractPlugin.loader,
+          "css-loader",
+          "postcss-loader",
+          "sass-loader"
+        ]
       },
       {
         // https://webpack.js.org/guides/asset-modules/#resource-assets
